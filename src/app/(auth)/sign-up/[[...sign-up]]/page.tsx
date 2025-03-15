@@ -15,14 +15,14 @@ export default function SignUpPage() {
   };
 
   const guestId = () => {
-    const existingGuestID = getGuestID();
-    if (existingGuestID) {
+    const existingGuestId = getGuestID();
+    if (existingGuestId) {
       router.push("/dashboard");
       return;
     }
 
-    const newGuestID = `guest-${uuidv4()}`;
-    document.cookie = `guestId=${newGuestID}; path=/;`;
+    const newGuestId = `guest-${uuidv4()}`;
+    document.cookie = `guestId=${newGuestId}; path=/;`;
     router.push("/dashboard");
   };
 
