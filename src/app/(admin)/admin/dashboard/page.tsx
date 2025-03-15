@@ -1,21 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { Coupon } from "@prisma/client";
 
 export default function AdminDashboard() {
   const [newCoupon, setNewCoupon] = useState({ code: "", total: 0, status: true });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [coupons, setCoupons] = useState([]);
 
-  const coupons = [
-    { id: 1, code: "COUPON1", status: "ACTIVE", total: 100, used: 50 },
-    { id: 2, code: "COUPON2", status: "INACTIVE", total: 200, used: 100 },
-  ];
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      const response = await fetch("/admin/api/fetch-coupons");
+      if (response.ok) {
+        const data = await response.json();
+        setCoupons(data);
+      } else {
+        console.error("Failed to fetch coupons");
+      }
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+    }
+  };
 
   const handleAddCoupon = async () => {
     if (!newCoupon.code || newCoupon.total <= 0) {
@@ -24,7 +39,6 @@ export default function AdminDashboard() {
     }
 
     setIsLoading(true);
-
     try {
       const response = await fetch("/admin/api/create-coupon", {
         method: "POST",
@@ -42,6 +56,7 @@ export default function AdminDashboard() {
         alert("Coupon added successfully!");
         setNewCoupon({ code: "", total: 0, status: true });
         setIsAddDialogOpen(false);
+        fetchCoupons();
       } else {
         const errorData = await response.json();
         alert("Failed to add coupon: " + errorData.message);
@@ -70,28 +85,16 @@ export default function AdminDashboard() {
             <TableHead>Total Issued</TableHead>
             <TableHead>Claimed</TableHead>
             <TableHead>Left to Claim</TableHead>
-            <TableHead>Enable/Disable</TableHead>
-            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {coupons.map((coupon) => (
+          {coupons.map((coupon: Coupon) => (
             <TableRow key={coupon.id}>
               <TableCell>{coupon.code}</TableCell>
               <TableCell>{coupon.status}</TableCell>
-              <TableCell>{coupon.total}</TableCell>
-              <TableCell>{coupon.used}</TableCell>
-              <TableCell>{coupon.total - coupon.used}</TableCell>
-              <TableCell>
-                <Switch 
-                //   checked={coupon.status === "ACTIVE"} 
-                  // onCheckedChange={() => handleStatusToggle(coupon.id, coupon.status)}
-                />
-              </TableCell>
-              <TableCell>
-                {/* <Button variant="outline" onClick={() => handleEdit(coupon)} size="sm">Edit</Button> */}
-                {/* <Button variant="destructive" size="sm" className="ml-2" onClick={() => handleDeleteCoupon(coupon.id)}>Delete</Button> */}
-              </TableCell>
+              <TableCell>{coupon.totalissued}</TableCell>
+              <TableCell>{coupon.totalused}</TableCell>
+              <TableCell>{coupon.totalissued - coupon.totalused}</TableCell>
             </TableRow>
           ))}
         </TableBody>
