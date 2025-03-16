@@ -28,7 +28,7 @@ model Coupon {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  claims Claim[] // ✅ No `@relation` here, since it's a one-to-many relation
+  claims Claim[]
 }
 
 model Claim {
@@ -42,7 +42,7 @@ model Claim {
   used      Boolean @default(false)
 
   couponId String
-  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade) // ✅ `onDelete: Cascade` applied correctly
+  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
