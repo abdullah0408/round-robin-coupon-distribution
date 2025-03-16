@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CouponStatus {
+  Active
+  Inactive
+}
+
 model Coupon {
   id          String       @id @default(cuid())
   code        String       @unique
@@ -23,19 +28,13 @@ model Coupon {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Claim Claim[]
-}
-
-enum CouponStatus {
-  Active
-  Inactive
+  claims Claim[] // ✅ No `@relation` here, since it's a one-to-many relation
 }
 
 model Claim {
   id        String  @id @default(cuid())
   secret    String  @unique
   userId    String?
-  userName  String?
   userEmail String?
   guestId   String?
   sessionId String
@@ -43,7 +42,7 @@ model Claim {
   used      Boolean @default(false)
 
   couponId String
-  coupon   Coupon @relation(fields: [couponId], references: [id])
+  coupon   Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade) // ✅ `onDelete: Cascade` applied correctly
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,11 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { v4 as uuidv4 } from "uuid"; // Import UUID for generating session IDs
 
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/dashboard(.*)",
-  "/"
+  "/api(.*)",
+  "/",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
@@ -15,7 +17,6 @@ export default clerkMiddleware(async (auth, request) => {
 
   const { userId, redirectToSignIn } = await auth();
   if (userId) {
-
     const response = await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
       headers: {
         Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
@@ -24,7 +25,11 @@ export default clerkMiddleware(async (auth, request) => {
     });
 
     if (!response.ok) {
-      console.error("Failed to fetch user:", response.status, response.statusText);
+      console.error(
+        "Failed to fetch user:",
+        response.status,
+        response.statusText
+      );
       return redirectToSignIn();
     }
 
@@ -45,16 +50,36 @@ export default clerkMiddleware(async (auth, request) => {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-  } 
-  
-  if (!userId) {
 
+    let loggedInUserSessionId = request.cookies.get("loggedInUserSessionId")?.value;
+
+    if(!loggedInUserSessionId) {
+      loggedInUserSessionId = uuidv4();
+
+      const response = NextResponse.next();
+      response.cookies.set("loggedInUserSessionId", loggedInUserSessionId, { path: "/", httpOnly: true });
+
+      return response;
+    }
+  }
+
+  if (!userId) {
     const guestID = request.cookies.get("guestId")?.value;
 
     if (!guestID && request.nextUrl.pathname !== "/sign-up") {
-        return NextResponse.redirect(new URL("/sign-up", request.url));
+      return NextResponse.redirect(new URL("/sign-up", request.url));
     }
 
+    let sessionID = request.cookies.get("guestSessionId")?.value;
+
+    if (!sessionID) {
+        sessionID = uuidv4();
+  
+        const response = NextResponse.next();
+        response.cookies.set("guestSessionId", sessionID, { path: "/", httpOnly: true });
+  
+        return response;
+    }
   }
 });
 
