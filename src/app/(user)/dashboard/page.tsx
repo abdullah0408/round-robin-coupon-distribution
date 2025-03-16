@@ -4,7 +4,13 @@ import { useEffect, useState, useRef } from "react";
 import { Ticket, Copy, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -26,7 +32,8 @@ type GeneratedCoupon = {
 };
 
 export default function UserCouponPage() {
-  const [generatedCoupon, setGeneratedCoupon] = useState<GeneratedCoupon | null>(null);
+  const [generatedCoupon, setGeneratedCoupon] =
+    useState<GeneratedCoupon | null>(null);
   const [claims, setClaims] = useState<Claims[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -47,8 +54,16 @@ export default function UserCouponPage() {
   const fetchClaims = async () => {
     try {
       const response = await fetch("/api/fetch-coupons");
-      if (!response.ok) throw new Error("Failed to load claims");
-      setClaims(await response.json());
+      if (!response.ok) {
+        if (response.status === 404) {
+          toast.info("No coupon history found.");
+          setClaims([]); // Set empty state
+        } else {
+          throw new Error("Failed to load claims");
+        }
+      } else {
+        setClaims(await response.json());
+      }
     } catch (error) {
       toast.error(
         `Failed to load claims: ${
@@ -71,7 +86,11 @@ export default function UserCouponPage() {
       }
 
       const data = await response.json();
-      setGeneratedCoupon({ code: data.code, secret: data.secret, showSecret: false });
+      setGeneratedCoupon({
+        code: data.code,
+        secret: data.secret,
+        showSecret: false,
+      });
       toast.success("Coupon generated successfully!");
       fetchClaims();
 
@@ -140,14 +159,18 @@ export default function UserCouponPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Coupon Generation Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Get Your Coupon</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">
+            Get Your Coupon
+          </h1>
           {generatedCoupon ? (
             <>
               {/* Coupon details rendered horizontally */}
               <div className="bg-gray-100 rounded-lg shadow-md flex items-center px-4 h-16">
                 {/* Left 1/4 for coupon code */}
                 <div className="flex items-center w-1/4">
-                  <span className="text-lg font-bold text-green-700">{generatedCoupon.code}</span>
+                  <span className="text-lg font-bold text-green-700">
+                    {generatedCoupon.code}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -161,14 +184,16 @@ export default function UserCouponPage() {
                 <div className="flex items-center w-3/4 justify-end gap-2">
                   <div className="flex-1 bg-gray-200 px-3 py-1 rounded h-10 flex items-center overflow-x-auto">
                     <code className="font-mono text-lg whitespace-nowrap">
-                      {generatedCoupon.showSecret ? generatedCoupon.secret : "••••••••••"}
+                      {generatedCoupon.showSecret
+                        ? generatedCoupon.secret
+                        : "••••••••••"}
                     </code>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() =>
-                      setGeneratedCoupon(prev =>
+                      setGeneratedCoupon((prev) =>
                         prev ? { ...prev, showSecret: !prev.showSecret } : null
                       )
                     }
@@ -217,7 +242,9 @@ export default function UserCouponPage() {
 
         {/* Claim History Section */}
         <div className="bg-white rounded-lg shadow">
-          <h2 className="text-xl font-semibold p-6 border-b">Your Coupon History</h2>
+          <h2 className="text-xl font-semibold p-6 border-b">
+            Your Coupon History
+          </h2>
           <Table>
             <TableHeader>
               <TableRow>
@@ -253,7 +280,10 @@ export default function UserCouponPage() {
                   ))
               ) : claims.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No coupons claimed yet
                   </TableCell>
                 </TableRow>
@@ -280,7 +310,9 @@ export default function UserCouponPage() {
                         {/* Fixed-width container to prevent layout shift for secret */}
                         <div className="w-56 overflow-x-auto">
                           <code className="font-mono text-sm">
-                            {activeClaimId === claim.id ? claim.secret : "••••••••"}
+                            {activeClaimId === claim.id
+                              ? claim.secret
+                              : "••••••••"}
                           </code>
                         </div>
                         <Button
@@ -304,11 +336,19 @@ export default function UserCouponPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={claim.coupon.status === "Active" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          claim.coupon.status === "Active"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
                         {claim.coupon.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(claim.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {new Date(claim.createdAt).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={claim.used ? "destructive" : "outline"}>
                         {claim.used ? "Used" : "Unused"}
