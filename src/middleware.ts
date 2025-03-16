@@ -16,6 +16,8 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   const { userId, redirectToSignIn } = await auth();
+
+
   if (userId) {
     const response = await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
       headers: {
@@ -62,13 +64,13 @@ export default clerkMiddleware(async (auth, request) => {
       return response;
     }
   }
+  const guestId = request.cookies.get("guestId")?.value;
 
   if (!userId) {
-    const guestID = request.cookies.get("guestId")?.value;
 
-    if (!guestID && request.nextUrl.pathname !== "/sign-up") {
+    if (!guestId && !["/sign-up", "/sign-in"].includes(request.nextUrl.pathname)) {
       return NextResponse.redirect(new URL("/sign-up", request.url));
-    }
+    }    
 
     let sessionID = request.cookies.get("guestSessionId")?.value;
 
@@ -78,9 +80,20 @@ export default clerkMiddleware(async (auth, request) => {
         const response = NextResponse.next();
         response.cookies.set("guestSessionId", sessionID, { path: "/", httpOnly: true });
   
-        return response;
+      return response;
     }
   }
+
+  const response = NextResponse.next();
+  if (!userId && request.cookies.get("loggedInUserSessionId")) {
+    response.cookies.delete("loggedInUserSessionId");
+  }
+  if (!guestId && request.cookies.get("guestSessionId")) {
+    response.cookies.delete("guestSessionId");
+  }
+
+  return response;
+
 });
 
 export const config = {

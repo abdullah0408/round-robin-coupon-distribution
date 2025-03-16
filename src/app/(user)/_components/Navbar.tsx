@@ -17,8 +17,8 @@ export function UserNavbar() {
   const handleSignOut = async () => {
     if (!userId) {
       // Guest user: Clear guest session cookies
-      deleteCookie("guestId");
-      deleteCookie("guestSessionId");
+      deleteCookie("guestSessionId", { path: "/" });
+      deleteCookie("guestId", { path: "/" });      
     } else {
       // Logged-in user: Clerk sign out and clear session cookie
       await signOut();

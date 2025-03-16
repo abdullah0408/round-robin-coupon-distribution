@@ -61,8 +61,8 @@ export async function GET() {
         throw new Error("A coupon has already been claimed in this session.");
       }
 
-      // 2. Check for IP-based claims within last 24 hours
-      const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      // 2. Check for IP-based claims within last 10 minutes (TEMPORARY BLOCK)
+      const twentyFourHoursAgo = new Date(Date.now() - 10 * 60 * 1000);
       const existingIPClaim = await tx.claim.findFirst({
         where: {
           ip,
@@ -71,7 +71,7 @@ export async function GET() {
       });
 
       if (existingIPClaim) {
-        throw new Error("This IP address has already claimed a coupon recently. Please wait 24 hours.");
+        throw new Error("This IP address has already claimed a coupon recently. Please wait 10 minutes.");
       }
 
       // Existing coupon selection logic
@@ -137,7 +137,7 @@ export async function GET() {
         break;
       case errorMessage.includes('IP address has already claimed'):
         status = 429;
-        suggestion = 'Wait 24 hours from this network';
+        suggestion = 'Wait  10 minutes from this network';
         break;
       case errorMessage.includes('Invalid session'):
         status = 401;
